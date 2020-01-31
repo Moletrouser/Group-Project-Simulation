@@ -1,86 +1,114 @@
 import vpython as vp
-from vpython import sphere, vector, color, rate, mag, canvas, box
+from vpython import *
 import numpy as np
 from sympy import *
 
 canvas(width=2400, height=1400)  # slightly bigger than default, adjust if you have small screen.
 
-dt = 0.01  # timestep
+dt = 0.0001  # timestep
 step = 1  # loop counter
-maxStep = 20000*100000  # maximum number of steps
-maxParticles = 20
+maxStep = 100000000000  # maximum number of steps, i intend to get rid of this and just have the loop run indefinitely
+maxParticles = 20 ## not implemented yet, to be used in prospective loop to create N gas particles
 
-box = box(pos=vector(0,0,0),length=60, height=60, width=60, opacity=0.2)
+box = box(pos=vector(0,0,0),length=60, height=60, width=60, opacity=0.2) ## sets the size of the box
 
+## values for the nano particle mass, M, and the gas mass, gasM. Not to scale, PLACEHOLDER VALUES
+M = 1
+gasM = 0.001
 
-#  Define the star, planets and constants
-M = 1000  # mass of star (in units where G = 1)
-gasM = 1
-initPos = vector(10, 0, 0)  # initial position vectors of Planets
+## marks the centre where potential is zero for reference
 centrePos = vector(0,0,0)
-nanoParticle = sphere(pos=initPos, radius=1, color=color.blue, make_trail=True )  # defines the appearance of the planets
 Centre = sphere(pos=centrePos, radius= 0.1, color=color.white)
+
+## takes randoms values from a normal dist. for the nano particle starting position (mean 5, standard dev. 0.5) PLACEHOLDER VALUES
+nanoxPos = np.random.normal(10,5,1)
+nanoyPos = np.random.normal(10,5,1)
+nanozPos = np.random.normal(10,5,1)
+initNanoPos = vector(nanoxPos, nanoyPos, nanozPos)
+
+## takes randoms values from a normal dist. for the nano particle velocity (mean 5, standard dev. 0.5) PLACEHOLDER VALUES
+nanoxVel = np.random.normal(3,1,1)
+nanoyVel = np.random.normal(3,1,1)
+nanozVel = np.random.normal(3,1,1)
+nanoVel = vector(nanoxVel, nanoyVel, nanozVel)
+
+## creates the nano particle with values defined above
+nanoParticle = sphere(pos=initNanoPos, radius=1, color=color.blue, make_trail=True, retain = 50 )
 nanoParticle.trail_color = color.white  # change the trail colour to white, or any colour you fancy
-
-nanoVel = vector(-0.5, 0.1, -0.2)  # defines the starting velocity vectors of the planets
 nanoVector = nanoParticle.pos
-nanoVectorMag = mag(nanoVector)  # finds the magnitude of the respective position vectors
+nanoVectorMag = mag(nanoVector)
 
-restForceDirection = (-1)*nanoVector/nanoVectorMag
-restForceMag = mag(nanoVector)**2
+## takes randoms values from a normal dist. for the gas starting position (mean 5, standard dev. 0.5) PLACEHOLDER VALUES
+gasxPos = np.random.normal(0,15,1)
+gasyPos = np.random.normal(0,15,1)
+gaszPos = np.random.normal(0,15,1)
+initGasPos = vector(gasxPos, gasyPos, gaszPos)
 
-i = 0
+## takes randoms values from a normal dist. for the gas velocity (mean 5, standard dev. 0.5) PLACEHOLDER VALUES
+gasxVel = np.random.normal(250,25,1)
+gasyVel = np.random.normal(250,25,1)
+gaszVel = np.random.normal(250,25,1)
+gasVel = vector(gasxVel, gasyVel, gaszVel)
 
-### Gas particle Generator ###
-##while i <= maxParticles:
-
-
-xPos = np.random.normal(10,3,1)
-yPos = np.random.normal(10,3,1)
-zPos = np.random.normal(10,3,1)
-initGasPos = vector(xPos, yPos, zPos)
-
-
-xVel = np.random.normal(5,0.5,1)
-yVel = np.random.normal(5,0.5,1)
-zVel = np.random.normal(5,0.5,1)
-gasVel = vector(xVel, yVel, zVel)
-
+## creates the gas particle with values defined above
 gasParticle = sphere(pos=initGasPos, radius=0.5, color=color.yellow)
-#gasParticle.trail_color = color.green
 
-gasVector = gasParticle.pos
-gasXPos = vp.dot(gasParticle.pos, vector(1,0,0))
-gasYPos = vp.dot(gasParticle.pos, vector(0,1,0))
-gasZPos = vp.dot(gasParticle.pos, vector(0,0,1))
+## creates a set of orthogonal arrows and labels to mark the co-ordinate axis
+xArrow = arrow(pos=vector(40,0,0), axis=vector(15,0,0), shaftwidth=1, color=color.blue)
+xLabel= label( pos=vec(60,0,0), text='x', color=color.blue)
+yArrow = arrow(pos=vector(40,0,0), axis=vector(0,15,0), shaftwidth=1, color=color.green)
+yLabel= label( pos=vec(40,20,0), text='y', color=color.green)
+zArrow = arrow(pos=vector(40,0,0), axis=vector(0,0,15), shaftwidth=1, color=color.red)
+zLabel= label( pos=vec(40,0,20), text='z', color=color.red)
 
-nanoToGasVector = gasParticle.pos-nanoParticle.pos
-nanoToGasDistance = mag(nanoToGasVector)
-
+## the entire simulation takes place within this while loop
 while step <= maxStep:
 
+    ## calculates the distance between the centres of the gas and nano particles
     nanoToGasVector = gasParticle.pos - nanoParticle.pos
     nanoToGasDistance = mag(nanoToGasVector)
 
+    ## this is an unneccesary way of calcuating the postion vector of the gas particle
+    ## can just be replaced with gasVector.x, gasVector.y etc
     gasXPos = vp.dot(gasParticle.pos, vector(1, 0, 0))
     gasYPos = vp.dot(gasParticle.pos, vector(0, 1, 0))
     gasZPos = vp.dot(gasParticle.pos, vector(0, 0, 1))
+    gasVector = gasParticle.pos
 
+    ## calculates the momentum of the gas and nano particle for use in collision calculations
+    ## not currently used
     nanoMomentum = mag(nanoVel)*M
     gasMomentum = mag(gasVel)*gasM
 
-    restForceDirection = (-1) * nanoVector / nanoVectorMag
-    restForceMag = mag(nanoVector) ** 2
+    ## sets the magnitude of the restoration force on each axis
+    restForceMagX = 377*abs(nanoVector.x)*M
+    restForceMagY = 753*abs(nanoVector.y)*M
+    restForceMagZ = 942*abs(nanoVector.z)*M
 
-    nanoVel = nanoVel + dt*restForceMag*restForceDirection/M
-    nanoVector = nanoVector + nanoVel * dt  # defines the new postion vectors of each planet after the velocity change
-    nanoParticle.pos = nanoVector  # tells python to set the sphere locations to the new position vectors
+    ## checks the position of the particle to decide in what direction the restoring force should act
+    if nanoVector.x > 0:
+        nanoVel.x = nanoVel.x - dt * restForceMagX / M
+    else:
+        nanoVel.x = nanoVel.x + dt * restForceMagX / M
+
+    if nanoVector.y > 0:
+        nanoVel.y = nanoVel.y - dt * restForceMagY / M
+    else:
+        nanoVel.y = nanoVel.y + dt * restForceMagY / M
+
+    if nanoVector.z > 0:
+        nanoVel.z = nanoVel.z - dt * restForceMagZ / M
+    else:
+        nanoVel.z = nanoVel.z + dt * restForceMagZ / M
+
+    nanoVector = nanoVector + nanoVel * dt  # defines the new position vector of the nano particle
+    nanoParticle.pos = nanoVector  # sets the new nanoParticle position to the updated postion vecotr
     nanoVectorMag = mag(nanoVector)
-    restForceDirection = (-1) * nanoVector / nanoVectorMag
 
-    gasVector = gasVector + gasVel * dt
-    gasParticle.pos = gasVector
+    gasVector = gasVector + gasVel * dt  # defines the new position vector of the gas particle
+    gasParticle.pos = gasVector # sets the new gas Particle position to the updated position vector
 
+    ## checks if the gas particle has collided with the walls of the container, reverses the velocity if so
     if abs(gasVector.x) >= 30:
         gasVel.x = -gasVel.x
     if abs(gasVector.y) >= 30:
@@ -88,8 +116,10 @@ while step <= maxStep:
     if abs(gasVector.z) >= 30:
         gasVel.z = -gasVel.z
 
-    #if nanoToGasDistance<(nanoParticle.radius + gasParticle.radius): #### re do collision code
+    ## condition to be met if collision has occurred
+    ## needs to be finished
+    #if nanoToGasDistance<(nanoParticle.radius + gasParticle.radius):
 
-    step = step + 1
-    rate(1200)
+    step = step + 1 ## advances the step counter
+    rate(1200) ## sets the animation rate
 
