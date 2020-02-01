@@ -6,8 +6,6 @@ from sympy import *
 canvas(width=2400, height=1400)  # slightly bigger than default, adjust if you have small screen.
 
 dt = 0.0001  # timestep
-step = 1  # loop counter
-maxStep = 100000000000  # maximum number of steps, i intend to get rid of this and just have the loop run indefinitely
 maxParticles = 20 ## not implemented yet, to be used in prospective loop to create N gas particles
 
 box = box(pos=vector(0,0,0),length=60, height=60, width=60, opacity=0.2) ## sets the size of the box
@@ -38,10 +36,10 @@ nanoParticle.trail_color = color.white  # change the trail colour to white, or a
 nanoVector = nanoParticle.pos
 nanoVectorMag = mag(nanoVector)
 
-## takes randoms values from a normal dist. for the gas starting position (mean 5, standard dev. 0.5) PLACEHOLDER VALUES
-gasxPos = np.random.normal(0,15,1)
-gasyPos = np.random.normal(0,15,1)
-gaszPos = np.random.normal(0,15,1)
+## picks a random integer value for each co-ordinate of the gas particles starting location within the box
+gasxPos = np.random.randint(-box.length/2, box.length/2)
+gasyPos = np.random.normal(-box.width/2, box.width/2)
+gaszPos = np.random.normal(-box.height/2,box.height/2)
 initGasPos = vector(gasxPos, gasyPos, gaszPos)
 
 ## takes randoms values from a normal dist. for the gas velocity (mean 5, standard dev. 0.5) PLACEHOLDER VALUES
@@ -62,7 +60,7 @@ zArrow = arrow(pos=vector(40,0,0), axis=vector(0,0,15), shaftwidth=1, color=colo
 zLabel= label( pos=vec(40,0,20), text='z', color=color.red)
 
 ## the entire simulation takes place within this while loop
-while step <= maxStep:
+while True:
 
     ## calculates the distance between the centres of the gas and nano particles
     nanoToGasVector = gasParticle.pos - nanoParticle.pos
@@ -109,17 +107,19 @@ while step <= maxStep:
     gasParticle.pos = gasVector # sets the new gas Particle position to the updated position vector
 
     ## checks if the gas particle has collided with the walls of the container, reverses the velocity if so
-    if abs(gasVector.x) >= 30:
+    if abs(gasVector.x) + gasParticle.radius >= box.length/2:
         gasVel.x = -gasVel.x
-    if abs(gasVector.y) >= 30:
+    if abs(gasVector.y) + gasParticle.radius >= box.width/2:
         gasVel.y = -gasVel.y
-    if abs(gasVector.z) >= 30:
+    if abs(gasVector.z) + gasParticle.radius >= box.height/2:
         gasVel.z = -gasVel.z
+
+    ## box.size/2
+    ## +(gasParticle.size/2)
 
     ## condition to be met if collision has occurred
     ## needs to be finished
     #if nanoToGasDistance<(nanoParticle.radius + gasParticle.radius):
 
-    step = step + 1 ## advances the step counter
     rate(1200) ## sets the animation rate
 
