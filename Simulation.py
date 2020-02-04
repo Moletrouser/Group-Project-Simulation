@@ -1,15 +1,22 @@
 import vpython as vp
 from vpython import *
 import numpy as np
-import random
-from sympy import *
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from matplotlib import style
 
+
+xPosData = []
+yPosData = []
+zPosData = []
+timeData = []
+count = 0
 canvas(width=2400, height=1400)  # slightly bigger than default, adjust if you have small screen.
 
-dt = 0.0001  # timestep
+dt = 0.001  # timestep
 maxParticles = 20 ## not implemented yet, to be used in prospective loop to create N gas particles
 
-box = box(pos=vector(0,0,0),length=120, height=120, width=120, opacity=0.2) ## sets the size of the box
+box = box(pos=vector(0,0,0),length=50, height=50, width=50, opacity=0.2) ## sets the size of the box
 
 ## values for the nano particle mass, M, and the gas mass, gasM. Not to scale, PLACEHOLDER VALUES
 M = 1e-18
@@ -20,15 +27,15 @@ centrePos = vector(0,0,0)
 Centre = sphere(pos=centrePos, radius= 0.1, color=color.white)
 
 ## takes randoms values from a normal dist. for the nano particle starting position (mean 5, standard dev. 0.5) PLACEHOLDER VALUES
-nanoxPos = np.random.normal(10,5,1)
-nanoyPos = np.random.normal(10,5,1)
-nanozPos = np.random.normal(10,5,1)
+nanoxPos = np.random.normal(10,0.05,1)
+nanoyPos = np.random.normal(10,0.05,1)
+nanozPos = np.random.normal(10,0.05,1)
 initNanoPos = vector(nanoxPos, nanoyPos, nanozPos)
 
 ## takes randoms values from a normal dist. for the nano particle velocity (mean 5, standard dev. 0.5) PLACEHOLDER VALUES
-nanoxVel = np.random.normal(1,0.2,1)
-nanoyVel = np.random.normal(1,0.2,1)
-nanozVel = np.random.normal(1,0.2,1)
+nanoxVel = np.random.normal(0.01,0.002,1)
+nanoyVel = np.random.normal(0.01,0.002,1)
+nanozVel = np.random.normal(0.01,0.002,1)
 nanoVel = vector(nanoxVel, nanoyVel, nanozVel)
 
 ## creates the nano particle with values defined above
@@ -44,13 +51,15 @@ gaszPos = (-box.height/2)+np.random.random()*box.height
 initGasPos = vector(gasxPos, gasyPos, gaszPos)
 
 ## takes randoms values from a normal dist. for the gas velocity (mean 5, standard dev. 0.5) PLACEHOLDER VALUES
-gasxVel = np.random.normal(1000,25,1)
-gasyVel = np.random.normal(1000,25,1)
-gaszVel = np.random.normal(1000,25,1)
+gasxVel = np.random.normal(20,25,1)
+gasyVel = np.random.normal(20,25,1)
+gaszVel = np.random.normal(20,25,1)
 gasVel = vector(gasxVel, gasyVel, gaszVel)
 
 ## creates the gas particle with values defined above
-gasParticle = sphere(pos=initGasPos, radius=0.5, color=color.yellow)
+##gasParticle = sphere(pos=initGasPos, radius=75e-12, color=color.yellow, make_trial=True, retain=50)
+gasParticle = sphere(pos=initGasPos, radius=0.2, color=color.yellow, make_trial=True, retain=500, trail_radius=10)
+gasParticle.trail_color = color.green
 
 ## creates a set of orthogonal arrows and labels to mark the co-ordinate axis
 xArrow = arrow(pos=vector(box.length/2+10,0,0), axis=vector(15,0,0), shaftwidth=1, color=color.blue)
@@ -59,6 +68,8 @@ yArrow = arrow(pos=vector(box.width/2+10,0,0), axis=vector(0,15,0), shaftwidth=1
 yLabel= label( pos=vec(box.width/2+20,20,0), text='y', color=color.green)
 zArrow = arrow(pos=vector(box.height/2+10,0,0), axis=vector(0,0,15), shaftwidth=1, color=color.red)
 zLabel= label( pos=vec(box.height/2+20,0,20), text='z', color=color.red)
+
+
 
 ## the entire simulation takes place within this while loop
 while True:
@@ -102,12 +113,7 @@ while True:
 
 
 
-    nanoVector = nanoVector + nanoVel * dt  # defines the new position vector of the nano particle
-    nanoParticle.pos = nanoVector  # sets the new nanoParticle position to the updated postion vecotr
-    nanoVectorMag = mag(nanoVector)
 
-    gasVector = gasVector + gasVel * dt  # defines the new position vector of the gas particle
-    gasParticle.pos = gasVector # sets the new gas Particle position to the updated position vector
 
     ## checks if the gas particle has collided with the walls of the container, reverses the velocity if so
     if gasVector.x - gasParticle.radius >= box.length/2:
@@ -153,33 +159,38 @@ while True:
         if gasVel.z < 0:
             nanoVel.z = -nanoVel.z
 
+    ## simulates gas particle collisions, place holder
+    if np.random.randint(0,501)>499: ## rolls a random number to decide if collision has occured
+
+        sign1 = (-1) ** np.random.randint(1, 3) ## decides the sign of the momentum contribution on each axis
+        sign2 = (-1) ** np.random.randint(1, 3)
+        sign3 = (-1) ** np.random.randint(1, 3)
+
+        impulseX = sign1 * np.random.normal(100,15,1)
+        impulseY = sign1 * np.random.normal(100, 15, 1)
+        impulseZ = sign1 * np.random.normal(100, 15, 1)
+
+        nanoVel.x =+ impulseX ## adds an impulse to the velocity on each axis
+        nanoVel.y =+ impulseY
+        nanoVel.z =+ impulseZ
+
+    nanoVector = nanoVector + nanoVel * dt  # defines the new position vector of the nano particle
+    nanoParticle.pos = nanoVector  # sets the new nanoParticle position to the updated postion vecotr
+    nanoVectorMag = mag(nanoVector)
 
 
-    ## condition to be met if collision has occurred
+    gasVector = gasVector + gasVel * dt  # defines the new position vector of the gas particle
+    gasParticle.pos = gasVector  # sets the new gas Particle position to the updated position vector
 
-    ## if nanoToGasDistance <= (nanoParticle.radius + gasParticle.radius):
-    if nanoToGasDistance <= 7:
+    count = count + dt
+    xPosData.append(nanoParticle.pos.x)
+    yPosData.append(nanoParticle.pos.y)
+    zPosData.append(nanoParticle.pos.z)
+    timeData.append(count)
+    np.savetxt('timeData.csv', timeData, delimiter=',')
+    np.savetxt('xData.csv', xPosData, delimiter=',')
+    np.savetxt('yData.csv', yPosData, delimiter=',')
+    np.savetxt('zData.csv', zPosData, delimiter=',')
 
-        vecX = nanoParticle.pos - gasParticle.pos
-        norm(vecX)
-
-        vecV1 = nanoVel
-        x1 = vecX.dot(vecV1)
-        vecV1x = vecX * x1
-        vecV1y = vecV1 - vecV1x
-        m1 = M
-
-        vecX = vecX*(-1)
-        vecV2 = gasVel
-        x2 = vecX.dot(vecV2)
-        vecV2x = vecX * x2
-        vecV2y = vecV2 - vecV2x
-        m2 = gasM
-
-        nanoVel = vecV1x * (m1 - m2)/(m1 + m2) + vecV2x * (2 * m2)/(m1 + m2) + vecV1y
-        gasVel = vecV1x * (2 * m1) / (m1 + m2) + vecV2x * (m2 - m1) / (m1 + m2) + vecV2y
-
-
-
-    rate(1200) ## sets the animation rate
+    rate(1000000) ## sets the animation rate
 
