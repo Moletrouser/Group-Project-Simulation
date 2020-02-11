@@ -9,10 +9,8 @@ zPosData = np.loadtxt("zData.csv", delimiter = ',')
 
 plt.plot(xPosData)
 plt.show()
-
 plt.plot(yPosData)
 plt.show()
-
 plt.plot(zPosData)
 plt.show()
 

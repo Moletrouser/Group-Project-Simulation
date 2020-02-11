@@ -13,7 +13,7 @@ timeData = []
 count = 0
 canvas(width=2400, height=1400)  # slightly bigger than default, adjust if you have small screen.
 
-dt = 0.001  # timestep
+dt = 0.005  # timestep
 maxParticles = 20 ## not implemented yet, to be used in prospective loop to create N gas particles
 
 box = box(pos=vector(0,0,0),length=50, height=50, width=50, opacity=0.2) ## sets the size of the box
@@ -58,8 +58,9 @@ gasVel = vector(gasxVel, gasyVel, gaszVel)
 
 ## creates the gas particle with values defined above
 ##gasParticle = sphere(pos=initGasPos, radius=75e-12, color=color.yellow, make_trial=True, retain=50)
-gasParticle = sphere(pos=initGasPos, radius=0.2, color=color.yellow, make_trial=True, retain=500, trail_radius=10)
-gasParticle.trail_color = color.green
+
+#gasParticle = sphere(pos=initGasPos, radius=0.2, color=color.yellow, make_trial=True, retain=500, trail_radius=10)
+#gasParticle.trail_color = color.green
 
 ## creates a set of orthogonal arrows and labels to mark the co-ordinate axis
 xArrow = arrow(pos=vector(box.length/2+10,0,0), axis=vector(15,0,0), shaftwidth=1, color=color.blue)
@@ -75,15 +76,15 @@ zLabel= label( pos=vec(box.height/2+20,0,20), text='z', color=color.red)
 while True:
 
     ## calculates the distance between the centres of the gas and nano particles
-    nanoToGasVector = gasParticle.pos - nanoParticle.pos
-    nanoToGasDistance = mag(nanoToGasVector)
+    #nanoToGasVector = gasParticle.pos - nanoParticle.pos
+    #nanoToGasDistance = mag(nanoToGasVector)
 
     ## this is an unneccesary way of calcuating the postion vector of the gas particle
     ## can just be replaced with gasVector.x, gasVector.y etc
-    gasXPos = vp.dot(gasParticle.pos, vector(1, 0, 0))
-    gasYPos = vp.dot(gasParticle.pos, vector(0, 1, 0))
-    gasZPos = vp.dot(gasParticle.pos, vector(0, 0, 1))
-    gasVector = gasParticle.pos
+    #gasXPos = vp.dot(gasParticle.pos, vector(1, 0, 0))
+    #gasYPos = vp.dot(gasParticle.pos, vector(0, 1, 0))
+    #gasZPos = vp.dot(gasParticle.pos, vector(0, 0, 1))
+    #gasVector = gasParticle.pos
 
     ## calculates the momentum of the gas and nano particle for use in collision calculations
     ## not currently used
@@ -113,8 +114,8 @@ while True:
 
 
 
-
-
+    '''
+    
     ## checks if the gas particle has collided with the walls of the container, reverses the velocity if so
     if gasVector.x - gasParticle.radius >= box.length/2:
         if gasVel.x > 0:
@@ -136,6 +137,8 @@ while True:
     if gasVector.z + gasParticle.radius <= -box.length / 2:
         if gasVel.z < 0:
             gasVel.z = -gasVel.z
+            
+    '''
 
     ## checks if the nano particle has collided with the walls of the container, reverses the velocity if so
     if nanoVector.x - nanoParticle.radius >= box.length / 2:
@@ -179,18 +182,17 @@ while True:
     nanoVectorMag = mag(nanoVector)
 
 
-    gasVector = gasVector + gasVel * dt  # defines the new position vector of the gas particle
-    gasParticle.pos = gasVector  # sets the new gas Particle position to the updated position vector
+    #gasVector = gasVector + gasVel * dt  # defines the new position vector of the gas particle
+    #gasParticle.pos = gasVector  # sets the new gas Particle position to the updated position vector
 
     count = count + dt
     xPosData.append(nanoParticle.pos.x)
     yPosData.append(nanoParticle.pos.y)
     zPosData.append(nanoParticle.pos.z)
     timeData.append(count)
-    np.savetxt('timeData.csv', timeData, delimiter=',')
     np.savetxt('xData.csv', xPosData, delimiter=',')
     np.savetxt('yData.csv', yPosData, delimiter=',')
     np.savetxt('zData.csv', zPosData, delimiter=',')
 
-    rate(1000000) ## sets the animation rate
+    rate(1000) ## sets the animation rate
 
