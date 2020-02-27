@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import style
-from pynput import keyboard
+#from pynput import keyboard
 
 
 xPosData = []
@@ -25,6 +25,12 @@ gasM = 5.46e-26
 alphaM = 6.644e-27
 sf6M =  2.425e-25
 c60M = 1.197e-24
+
+T = 293
+kB = 1.38e-23
+P_gas = 1e-11
+nanoR = 199e-9
+rho = 1850
 
 ## marks the centre where potential is zero for reference
 centrePos = vector(0,0,0)
@@ -60,6 +66,8 @@ graphpos = graph(x=2000, y=2000, width=1000, height=500, title='Position Vs Time
                  foreground=color.black, background=color.black)
 graphVel = graph(x=2000, y=2000, width=1000, height=500, title='Velocity Vs Time', xtitle='time', ytitle='Velocity',
                  foreground=color.black, background=color.black)
+graphKE = graph(x=2000, y=2000, width=1000, height=500, title='KE Vs Time', xtitle='time', ytitle='KE',
+                 foreground=color.black, background=color.black)
 
 x_pos = gcurve(graph=graphpos, color=color.red, label='x position')
 y_pos = gcurve(graph=graphpos, color=color.blue, label='y position')
@@ -69,14 +77,19 @@ x_vel = gcurve(graph=graphVel, color=color.red, label='x velocity')
 y_vel = gcurve(graph=graphVel, color=color.blue, label='y velocity')
 z_vel = gcurve(graph=graphVel, color=color.green, label='z velocity')
 
+c = (8*kB*T/gasM/pi)**0.5 #Partcle mean speed
+b = ((1 + pi/8)*c*P_gas*gasM)/(kB*T*nanoR*rho) #gas damping term
+
+
 ## the entire simulation takes place within this while loop
 while True:
 
     ## sets the magnitude of the restoration force on each axis
-    restForceMagX = 377*abs(nanoVector.x)*nanoM
-    restForceMagY = 753*abs(nanoVector.y)*nanoM
-    restForceMagZ = 942*abs(nanoVector.z)*nanoM
-
+    restForceMagX = 377*abs(nanoVector.x)*nanoM + b*abs(nanoVel.x)*nanoM
+    restForceMagY = 753*abs(nanoVector.y)*nanoM + b*abs(nanoVel.y)*nanoM
+    restForceMagZ = 942*abs(nanoVector.z)*nanoM + b*abs(nanoVel.z)*nanoM
+    
+    
     ## checks the position of the particle to decide in what direction the restoring force should act
     if nanoVector.x > 0:
         nanoVel.x = nanoVel.x - dt * restForceMagX / nanoM
@@ -116,30 +129,39 @@ while True:
         if gasVel.z < 0:
             nanoVel.z = -nanoVel.z
 
-    ## simulates gas particle collisions, place holder
-    if np.random.randint(0,1001)>998: ## rolls a random number to decide if collision has occured
 
-        sign1 = (-1) ** np.random.randint(1, 3) ## decides the sign of the momentum contribution on each axis
-        sign2 = (-1) ** np.random.randint(1, 3)
-        sign3 = (-1) ** np.random.randint(1, 3)
+# Replaced the code below with a damping term due to the gas molecules
+# =============================================================================
+# 
+#     ## simulates gas particle collisions, place holder
+#     if np.random.randint(0,1001)>998: ## rolls a random number to decide if collision has occured
+# 
+#         sign1 = (-1) ** np.random.randint(1, 3) ## decides the sign of the momentum contribution on each axis
+#         sign2 = (-1) ** np.random.randint(1, 3)
+#         sign3 = (-1) ** np.random.randint(1, 3)
+# 
+#         impulseX = sign1 * np.random.normal(25, 3,1)
+#         impulseY = sign1 * np.random.normal(25, 3, 1)
+#         impulseZ = sign1 * np.random.normal(25, 3, 1)
+# 
+#         nanoVel.x =+ impulseX ## adds an impulse to the velocity on each axis
+#         nanoVel.y =+ impulseY
+#         nanoVel.z =+ impulseZ
+# =============================================================================
 
-        impulseX = sign1 * np.random.normal(25, 3,1)
-        impulseY = sign1 * np.random.normal(25, 3, 1)
-        impulseZ = sign1 * np.random.normal(25, 3, 1)
-
-        nanoVel.x =+ impulseX ## adds an impulse to the velocity on each axis
-        nanoVel.y =+ impulseY
-        nanoVel.z =+ impulseZ
 
     ## simulates SF6/C60/alpha collisions. Delete as appropriate, needs refining
     if np.random.randint(0,1001)>999: ## rolls a random number to decide if collision has occured
-
-        Impulse = 0.1*(3e8)*alphaM      ## Alpha particle
-        #Impulse = 0.001 * (3e8) * c60M  ## C60 particle
+        #Impulse = 0.1*(3e8)*alphaM      ## Alpha particle
+        Impulse = 0.001 * (3e8) * c60M  ## C60 particle
         #Impulse = 0.001 * (3e8) * sf6M  ## SF6 particle
-        nanoVel.x =+ Impulse
-
-    nanoVector = nanoVector + nanoVel * dt  # defines the new position vector of the nano particle
+        nanoVel.x += Impulse
+     
+        
+    nanoVector.x = nanoVector.x + nanoVel.x * dt + dt * dt * restForceMagX/(2*nanoM)
+    nanoVector.y = nanoVector.y + nanoVel.y * dt + dt * dt * restForceMagY/(2*nanoM)
+    nanoVector.z = nanoVector.z + nanoVel.z * dt + dt * dt * restForceMagZ/(2*nanoM)
+    
     nanoParticle.pos = nanoVector  # sets the new nanoParticle position to the updated postion vecotr
     nanoVectorMag = mag(nanoVector)
 
@@ -153,6 +175,7 @@ while True:
     x_vel.plot(pos=(count, nanoVel.x))
     y_vel.plot(pos=(count, nanoVel.y))
     z_vel.plot(pos=(count, nanoVel.z))
+            
 
     rate(300) ## sets the animation rate
 
