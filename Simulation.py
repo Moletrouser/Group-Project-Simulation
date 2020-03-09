@@ -17,7 +17,7 @@ canvas(width=2400, height=1400)  # slightly bigger than default, adjust if you h
 dt = 0.0002  # timestep
 maxParticles = 20 ## not implemented yet, to be used in prospective loop to create N gas particles
 
-box = box(pos=vector(0,0,0),length=50, height=50, width=50, opacity=0.2) ## sets the size of the box
+box = box(pos=vector(0,0,0),length=100, height=100, width=100, opacity=0.2) ## sets the size of the box
 
 ## values for the nano particle mass, M, the gas particle mass, and SF6/C60 masses in kg
 nanoM = 1e-18
@@ -49,7 +49,7 @@ nanozVel = np.random.normal(0.01,0.002,1)
 nanoVel = vector(nanoxVel, nanoyVel, nanozVel)
 
 ## creates the nano particle with values defined above
-nanoParticle = sphere(pos=initNanoPos, radius=1, color=color.blue, make_trail=True, retain = 50 )
+nanoParticle = sphere(pos=initNanoPos, radius=1, color=color.blue, make_trail=True, retain = 100, interval=10 )
 nanoParticle.trail_color = color.white  # change the trail colour to white, or any colour you fancy
 nanoVector = nanoParticle.pos
 nanoVectorMag = mag(nanoVector)
@@ -80,6 +80,7 @@ z_vel = gcurve(graph=graphVel, color=color.green, label='z velocity')
 c = (8*kB*T/gasM/pi)**0.5 #Partcle mean speed
 b = ((1 + pi/8)*c*P_gas*gasM)/(kB*T*nanoR*rho) #gas damping term
 
+b = 90# experimenting with larger b term
 
 ## the entire simulation takes place within this while loop
 while True:
@@ -130,34 +131,31 @@ while True:
             nanoVel.z = -nanoVel.z
 
 
-# Replaced the code below with a damping term due to the gas molecules
-# =============================================================================
-# 
-#     ## simulates gas particle collisions, place holder
-#     if np.random.randint(0,1001)>998: ## rolls a random number to decide if collision has occured
-# 
-#         sign1 = (-1) ** np.random.randint(1, 3) ## decides the sign of the momentum contribution on each axis
-#         sign2 = (-1) ** np.random.randint(1, 3)
-#         sign3 = (-1) ** np.random.randint(1, 3)
-# 
-#         impulseX = sign1 * np.random.normal(25, 3,1)
-#         impulseY = sign1 * np.random.normal(25, 3, 1)
-#         impulseZ = sign1 * np.random.normal(25, 3, 1)
-# 
-#         nanoVel.x =+ impulseX ## adds an impulse to the velocity on each axis
-#         nanoVel.y =+ impulseY
-#         nanoVel.z =+ impulseZ
-# =============================================================================
+    ## simulates gas particle collisions, place holder
+    if np.random.randint(0,6001)>5999: ## rolls a random number to decide if collision has occured
+
+         sign1 = (-1) ** np.random.randint(1, 3) ## decides the sign of the momentum contribution on each axis
+         sign2 = (-1) ** np.random.randint(1, 3)
+         sign3 = (-1) ** np.random.randint(1, 3)
+
+         impulseX = sign1 * np.random.normal(5e-5, 2e-6, 1)
+         impulseY = sign2 * np.random.normal(5e-5, 2e-6, 1)
+         impulseZ = sign3 * np.random.normal(5e-5, 2e-6, 1)
+
+         nanoVel.x =+ impulseX ## adds an impulse to the velocity on each axis
+         nanoVel.y =+ impulseY
+         nanoVel.z =+ impulseZ 
 
 
     ## simulates SF6/C60/alpha collisions. Delete as appropriate, needs refining
-    if np.random.randint(0,1001)>999: ## rolls a random number to decide if collision has occured
+    if np.random.randint(0,9001)>8999: ## rolls a random number to decide if collision has occured
         #Impulse = 0.1*(3e8)*alphaM      ## Alpha particle
-        Impulse = 0.001 * (3e8) * c60M  ## C60 particle
+        Impulse = 0.1 * (3e8) * c60M  ## C60 particle
         #Impulse = 0.001 * (3e8) * sf6M  ## SF6 particle
-        nanoVel.x += Impulse
-     
-        
+
+        nanoMomentum = nanoVel.x*nanoM + Impulse
+        nanoVel.x += nanoMomentum/nanoM
+
     nanoVector.x = nanoVector.x + nanoVel.x * dt + dt * dt * restForceMagX/(2*nanoM)
     nanoVector.y = nanoVector.y + nanoVel.y * dt + dt * dt * restForceMagY/(2*nanoM)
     nanoVector.z = nanoVector.z + nanoVel.z * dt + dt * dt * restForceMagZ/(2*nanoM)
@@ -177,6 +175,6 @@ while True:
     z_vel.plot(pos=(count, nanoVel.z))
             
 
-    rate(300) ## sets the animation rate
+    rate(800) ## sets the animation rate
 
 
