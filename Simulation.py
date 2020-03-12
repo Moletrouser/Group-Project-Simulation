@@ -77,80 +77,58 @@ b = ((1 + pi/8)*c*P_gas*gasM)/(kB*T*nanoR*rho) #gas damping term
 
 gasMomentum = c*gasM
 
-thermalX = 0
-thermalY = 0
-thermalZ = 0
+thermalX = 8*10e11
+thermalY = 8*10e11
+thermalZ = 8*10e11
 
 ## the entire simulation takes place within this while loop
 while True:
 
     ## sets the magnitude of the restoration force on each axis
     restForceMagX = (1.42e-7)*abs(nanoVector.x)  #- 1*10e-20 #- b*abs(nanoVel.x) #- 1*10e-25
-    dampingForceMagX = (1/10)*(5*10e-14) * abs(nanoVel.x)
-    restForceMagY = (5.68e-7)*abs(nanoVector.y)  #- 1*10e-20 #- b*abs(nanoVel.y) #- 1*10e-25
-    dampingForceMagY = (5*10e-14) * abs(nanoVel.y)
-    restForceMagZ = (8.88e-7)*abs(nanoVector.z)  #- 1*10e-20 #- b*abs(nanoVel.z) #- 1*10e-25
-    dampingForceMagZ = (5*10e-14) * abs(nanoVel.z)
+    dampingForceMagX = (9*10e-15) * abs(nanoVel.x)
 
-    ## checks the position of the particle to decide in what direction the restoring force should act
+    restForceMagY = (5.68e-7)*abs(nanoVector.y)  #- 1*10e-20 #- b*abs(nanoVel.y) #- 1*10e-25
+    dampingForceMagY = (9*10e-15) * abs(nanoVel.y)
+
+    restForceMagZ = (8.88e-7)*abs(nanoVector.z)  #- 1*10e-20 #- b*abs(nanoVel.z) #- 1*10e-25
+    dampingForceMagZ = (9*10e-15) * abs(nanoVel.z)
+
+    ## checks the position of the particle to decide in what direction the restoring force/ thermal energy input should act
     if nanoVector.x > 0:
-        nanoVel.x = nanoVel.x - dt * (restForceMagX + thermalX)/ nanoM
+        nanoVel.x = nanoVel.x - dt * restForceMagX / nanoM
     else:
-        nanoVel.x = nanoVel.x + dt * (restForceMagX - thermalX) / nanoM
+        nanoVel.x = nanoVel.x + dt * restForceMagX / nanoM
 
     if nanoVector.y > 0:
-        nanoVel.y = nanoVel.y - dt * (restForceMagY + thermalY)/ nanoM
+        nanoVel.y = nanoVel.y - dt * restForceMagY / nanoM
     else:
-        nanoVel.y = nanoVel.y + dt * (restForceMagY - thermalY)/ nanoM
+        nanoVel.y = nanoVel.y + dt * restForceMagY / nanoM
 
     if nanoVector.z > 0:
-        nanoVel.z = nanoVel.z - dt * (restForceMagZ + thermalZ) / nanoM
+        nanoVel.z = nanoVel.z - dt * restForceMagZ / nanoM
     else:
-        nanoVel.z = nanoVel.z + dt * (restForceMagZ + thermalZ)/ nanoM
+        nanoVel.z = nanoVel.z + dt * restForceMagZ / nanoM
 
     ## checks the velocity of the particle to decide in what direction the damping force should act
     if nanoVel.x > 0:
-        nanoVel.x = nanoVel.x - dt * dampingForceMagX / nanoM
+        nanoVel.x = nanoVel.x - dt * dampingForceMagX / nanoM + dt*thermalX
     else:
-        nanoVel.x = nanoVel.x + dt * dampingForceMagX / nanoM
+        nanoVel.x = nanoVel.x + dt * dampingForceMagX / nanoM - dt*thermalX
 
-    if nanoVector.y > 0:
-        nanoVel.y = nanoVel.y - dt * dampingForceMagY / nanoM
+    if nanoVel.y > 0:
+        nanoVel.y = nanoVel.y - dt * dampingForceMagY / nanoM + dt*thermalY
     else:
-        nanoVel.y = nanoVel.y + dt * dampingForceMagY / nanoM
+        nanoVel.y = nanoVel.y + dt * dampingForceMagY / nanoM - dt*thermalY
 
-    if nanoVector.z > 0:
-        nanoVel.z = nanoVel.z - dt * dampingForceMagZ / nanoM
+    if nanoVel.z > 0:
+        nanoVel.z = nanoVel.z - dt * dampingForceMagZ / nanoM + dt*thermalZ
     else:
-        nanoVel.z = nanoVel.z + dt * dampingForceMagZ / nanoM
+        nanoVel.z = nanoVel.z + dt * dampingForceMagZ / nanoM - dt*thermalZ
 
-    '''
-    ## checks if the nano particle has collided with the walls of the container, reverses the velocity if so
-    if nanoVector.x - nanoParticle.radius >= box.length / 2:
-        if nanoVel.x > 0:
-            nanoVel.x = -nanoVel.x
-    if nanoVector.x + nanoParticle.radius <= -box.length / 2:
-        if nanoVel.x < 0:
-            nanoVel.x = -nanoVel.x
 
-    if nanoVector.y - nanoParticle.radius >= box.width / 2:
-        if nanoVel.y > 0:
-            nanoVel.y = -nanoVel.y
-    if nanoVector.y + nanoParticle.radius <= -box.length / 2:
-        if nanoVel.y < 0:
-            nanoVel.y = -nanoVel.y
-
-    if nanoVector.z - nanoParticle.radius >= box.height / 2:
-        if nanoVel.z > 0:
-            nanoVel.z = -nanoVel.z
-    if nanoVector.z + nanoParticle.radius <= -box.length / 2:
-        if gasVel.z < 0:
-            nanoVel.z = -nanoVel.z
-    '''
-
-    #'''
     ## simulates gas particle collisions, place holder
-    if np.random.randint(0,1001)>995: ## rolls a random number to decide if collision has occured
+    if np.random.randint(0,1001)>990: ## rolls a random number to decide if collision has occured
 
          sign1 = (-1) ** np.random.randint(1, 3)  ## decides the sign of the momentum contribution on each axis
          sign2 = (-1) ** np.random.randint(1, 3)  ## decides the sign of the momentum contribution on each axis
@@ -174,7 +152,7 @@ while True:
 
 
     ## simulates SF6/C60/alpha collisions. Delete as appropriate, needs refining
-    if np.random.randint(0,1001)>995: ## rolls a random number to decide if collision has occured
+    if np.random.randint(0,1001)>998: ## rolls a random number to decide if collision has occured
         #Impulse = 0.1*(3e8)*alphaM      ## Alpha particle
         Impulse = 0.01 * (3e8) * c60M  ## C60 particle
         #Impulse = 0.0001 * (3e8) * sf6M  ## SF6 particle
