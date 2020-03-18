@@ -10,7 +10,7 @@ canvas(width=2400, height=1400)  # slightly bigger than default, adjust if you h
 
 dt = 10e-8 # timestep
 
-box = box(pos=vector(0,0,0),length=5000, height=5000, width=5000, opacity=0.1) ## sets the size of the box
+box = box(pos=vector(0,0,0),length=1000, height=1000, width=1000, opacity=0.1) ## sets the size of the box
 
 ## values for the nano particle mass, M, the gas particle mass, and SF6/C60 masses in kg
 nanoM = 1e-18
@@ -21,7 +21,7 @@ c60M = 1.197e-24
 
 T = 293
 kB = 1.38e-23
-P_gas = 5e-3
+P_gas = 500e-3
 nanoR = 199e-9
 rho = 1850
 
@@ -30,15 +30,15 @@ centrePos = vector(0,0,0)
 Centre = sphere(pos=centrePos, radius= 5, color=color.white)
 
 ## takes randoms values from a normal dist. for the nano particle starting position (mean 5, standard dev. 0.5) PLACEHOLDER VALUES
-nanoxPos = np.random.normal(500,50,1)
-nanoyPos = np.random.normal(500,50,1)
-nanozPos = np.random.normal(500,50,1)
+nanoxPos = np.random.normal(0.5,0.05,1)
+nanoyPos = np.random.normal(0.5,0.05,1)
+nanozPos = np.random.normal(0.5,0.05,1)
 initNanoPos = vector(nanoxPos, nanoyPos, nanozPos)
 
 ## takes randoms values from a normal dist. for the nano particle velocity (mean 5, standard dev. 0.5) PLACEHOLDER VALUES
-nanoxVel = np.random.normal(1,0.2,1)
-nanoyVel = np.random.normal(1,0.2,1)
-nanozVel = np.random.normal(1,0.2,1)
+nanoxVel = np.random.normal(0.1,0.02,1)
+nanoyVel = np.random.normal(0.1,0.02,1)
+nanozVel = np.random.normal(0.1,0.02,1)
 nanoVel = vector(nanoxVel, nanoyVel, nanozVel)
 
 ## creates the nano particle with values defined above
@@ -74,12 +74,20 @@ c = (8*kB*T/gasM/pi)**0.5 #Particle mean speed
 b = ((1 + pi/8)*c*P_gas*gasM)/(kB*T*nanoR*rho) #gas damping term
 
 b = ((1 + pi/8)*c*P_gas*gasM)/(kB*T*nanoR*rho) #gas damping term
-
+print(b)
 gasMomentum = c*gasM
 
-thermalX = 8*10e11
-thermalY = 8*10e11
-thermalZ = 8*10e11
+thermalX = 5*10e11
+thermalY = 5*10e11
+thermalZ = 5*10e11
+
+def casimirForce(x):
+    casimirForceMicroN = 0.0408*x**4 - 0.5945*x**3 + 1.9414*x**2 + 1.8969*x - 3.067
+    casimirForce = casimirForceMicroN*10**-6
+    if abs(x) > 7e-6:
+        casimirForce = 0
+    return x
+
 
 ## the entire simulation takes place within this while loop
 while True:
@@ -106,9 +114,9 @@ while True:
         nanoVel.y = nanoVel.y + dt * restForceMagY / nanoM
 
     if nanoVector.z > 0:
-        nanoVel.z = nanoVel.z - dt * restForceMagZ / nanoM
+        nanoVel.z = nanoVel.z - dt * (restForceMagZ + casimirForce(nanoVector.z/10e6))/ nanoM
     else:
-        nanoVel.z = nanoVel.z + dt * restForceMagZ / nanoM
+        nanoVel.z = nanoVel.z + dt * (restForceMagZ + casimirForce(nanoVector.z/10e6))/ nanoM
 
     ## checks the velocity of the particle to decide in what direction the damping force should act
     if nanoVel.x > 0:
