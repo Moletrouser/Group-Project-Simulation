@@ -1,19 +1,22 @@
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-plt.figure()
-timeData = np.loadtxt("timeData.csv", delimiter = ',')
-xPosData = np.loadtxt("xData.csv", delimiter = ',')
-yPosData = np.loadtxt("yData.csv", delimiter = ',')
-zPosData = np.loadtxt("zData.csv", delimiter = ',')
+x = []
+y = []
+z = []
 
-plt.plot(xPosData)
-plt.show()
-plt.plot(yPosData)
-plt.show()
-plt.plot(zPosData)
-plt.show()
+z = np.loadtxt('zData.csv')
+#print(a.size)
 
-#plt.plot(countData,yData, xlabel = "time", ylabel = "y displacement", title = "y displacement over time")
-#plt.plot(countData,zData, xlabel = "time", ylabel = "z displacement", title = "z displacement over time")
-#plt.show()
+#histX = plt.hist(x, bins=100)
+i=0
+'''
+while i<2000:
+    np.delete(arr=y,obj=i)
+    i = i + 1
+'''
+
+histZ = plt.hist(z, bins=10)
+#histZ = plt.hist(z, bins=100)
+plt.show()
