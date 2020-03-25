@@ -1,10 +1,12 @@
 from vpython import *
 import numpy as np
+import pickle as p
 
-xPosData = []
-yPosData = []
-zPosData = []
-timeData = []
+i=0
+xPosData = np.array([])
+yPosData = np.array([])
+zPosData = np.array([])
+timeData = np.array([])
 velocityComponents = np.zeros(3)
 
 count = 0
@@ -12,7 +14,7 @@ canvas(width=2400, height=1400)  # slightly bigger than default, adjust if you h
 
 dt = 10e-8 # timestep
 
-box = box(pos=vector(0,0,0),length=1000, height=1000, width=1000, opacity=0.1) ## sets the size of the box
+box = box(pos=vector(0,0,0),length=10e-8, height=10e-8, width=10e-8, opacity=0.1) ## sets the size of the box
 
 ## values for the nano particle mass, M, the gas particle mass, and SF6/C60 masses in kg
 nanoM = 1e-18
@@ -23,45 +25,53 @@ c60M = 1.197e-24
 
 T = 293
 kB = 1.38e-23
-P_gas = 5e-3
+P_gas = 5
 nanoR = 199e-9
 rho = 1850
 
 ## marks the centre where potential is zero for reference
 centrePos = vector(0,0,0)
-Centre = sphere(pos=centrePos, radius= 5, color=color.white)
+Centre = sphere(pos=centrePos, radius= 10e-11, color=color.white)
 
 ## takes randoms values from a normal dist. for the nano particle starting position (mean 5, standard dev. 0.5) PLACEHOLDER VALUES
-nanoxPos = np.random.normal(0.5,0.05,1)
-nanoyPos = np.random.normal(0.5,0.05,1)
-nanozPos = np.random.normal(0.5,0.05,1)
+#nanoxPos = np.random.normal(5e-7,5e-8,1)
+#nanoyPos = np.random.normal(5e-7,5e-8,1)
+#nanozPos = np.random.normal(5e-7,5e-8,1)
+
+nanoxPos = 2.65e-8
+nanoyPos = 1.35e-8
+nanozPos = 1.2e-8 #-51
 initNanoPos = vector(nanoxPos, nanoyPos, nanozPos)
 
 ## takes randoms values from a normal dist. for the nano particle velocity (mean 5, standard dev. 0.5) PLACEHOLDER VALUES
-nanoxVel = np.random.normal(0.1,0.02,1)
-nanoyVel = np.random.normal(0.1,0.02,1)
-nanozVel = np.random.normal(0.1,0.02,1)
+#nanoxVel = np.random.normal(1e-6,1e-7,1)
+#nanoyVel = np.random.normal(1e-6,1e-7,1)
+#nanozVel = np.random.normal(1e-6,1e-7,1)
+
+nanoxVel = 0
+nanoyVel = 0
+nanozVel = 0
 nanoVel = vector(nanoxVel, nanoyVel, nanozVel)
 
 ## creates the nano particle with values defined above
-nanoParticle = sphere(pos=initNanoPos, radius=10, color=color.blue, make_trail=True, retain = 50, interval=1 )
+nanoParticle = sphere(pos=initNanoPos, radius=10e-10, color=color.blue, make_trail=True, retain = 50, interval=1 )
 nanoParticle.trail_color = color.white  # change the trail colour to white, or any colour you fancy
 nanoVector = nanoParticle.pos
 nanoVectorMag = mag(nanoVector)
 
 ## creates a set of orthogonal arrows and labels to mark the co-ordinate axis
-xArrow = arrow(pos=vector(box.length/2+0.1*box.length,0,0), axis=vector(0.15*box.length,0,0), shaftwidth=10, color=color.red)
+xArrow = arrow(pos=vector(box.length/2+0.1*box.length,0,0), axis=vector(0.15*box.length,0,0), shaftwidth=10e-10, color=color.red)
 xLabel= label( pos=vec(box.length/2+0.1*box.length + 1.1*xArrow.length,0,0), text='x', color=color.red)
-yArrow = arrow(pos=vector(box.width/2+0.1*box.length,0,0), axis=vector(0,0.15*box.length,0), shaftwidth=10, color=color.blue)
+yArrow = arrow(pos=vector(box.width/2+0.1*box.length,0,0), axis=vector(0,0.15*box.length,0), shaftwidth=10e-10, color=color.blue)
 yLabel= label( pos=vec(box.width/2+0.1*box.length,1.1*yArrow.length,0), text='y', color=color.blue)
-zArrow = arrow(pos=vector(box.height/2+0.1*box.length,0,0), axis=vector(0,0,0.15*box.length), shaftwidth=10, color=color.green)
+zArrow = arrow(pos=vector(box.height/2+0.1*box.length,0,0), axis=vector(0,0,0.15*box.length), shaftwidth=10e-10, color=color.green)
 zLabel= label( pos=vec(box.height/2+0.1*box.length,0,1.1*zArrow.length), text='z', color=color.green)
 
-graphpos = graph(x=2000, y=2000, width=1000, height=500, title='Position Vs Time', xtitle='time', ytitle='Position',
+graphpos = graph(x=2000, y=2000, width=1000, height=500, title='Position Vs Time', xtitle='time /s', ytitle='Position /m',
+                 foreground=color.black, background=color.white)
+graphVel = graph(x=2000, y=2000, width=1000, height=500, title='Velocity Vs Time', xtitle='time /s', ytitle='Velocity /ms^-1',
                  foreground=color.black, background=color.black)
-graphVel = graph(x=2000, y=2000, width=1000, height=500, title='Velocity Vs Time', xtitle='time', ytitle='Velocity',
-                 foreground=color.black, background=color.black)
-graphKE = graph(x=2000, y=2000, width=1000, height=500, title='KE Vs Time', xtitle='time', ytitle='KE',
+graphKE = graph(x=2000, y=2000, width=1000, height=500, title='KE Vs Time', xtitle='time /s', ytitle='KE',
                  foreground=color.black, background=color.black)
 graphHist = graph(x=2000, y=2000, width=1000, height=500, title='Position Frequency', xtitle='Position', ytitle='Frequency',
                  foreground=color.black, background=color.black)
@@ -79,12 +89,17 @@ c = (8*kB*T/gasM/pi)**0.5 #Particle mean speed
 b = ((1 + pi/8)*c*P_gas*gasM)/(kB*T*nanoR*rho) #gas damping term
 
 b = ((1 + pi/8)*c*P_gas*gasM)/(kB*T*nanoR*rho) #gas damping term
-print(b)
+
 gasMomentum = c*gasM
 
-thermalX = 5*10e11 #5*10e11
-thermalY = 5*10e11 #5*10e11
-thermalZ = 5*10e11 #5*10e11
+Sthermal = 4*kB*T*gasM*b
+
+thermalX = Sthermal
+thermalY = Sthermal
+thermalZ = Sthermal
+
+print("The value of b is: ", b)
+print("Sthermal is: ", Sthermal)
 
 '''
 def casimirForce(x):
@@ -104,19 +119,20 @@ distanceToPlate = 7 + nanoVector.z  ## calculates the distance to the plate
 while True:
 
     ## sets the magnitude of the restoration force on each axisc
-    restForceMagX = (1.42e-7)*abs(nanoVector.x)  #- 1*10e-20 #- b*abs(nanoVel.x) #- 1*10e-25
-    dampingForceMagX = (9*10e-15) * abs(nanoVel.x)
+    restForceMagX = (1.42e-7)*abs(nanoVector.x)
+    dampingForceMagX = b * abs(nanoVel.x)
 
-    restForceMagY = (5.68e-7)*abs(nanoVector.y)  #- 1*10e-20 #- b*abs(nanoVel.y) #- 1*10e-25
-    dampingForceMagY = (9*10e-15) * abs(nanoVel.y)
+    restForceMagY = (5.68e-7)*abs(nanoVector.y)
+    dampingForceMagY = b * abs(nanoVel.y)
 
-    restForceMagZ = (8.88e-7)*abs(nanoVector.z)  #- 1*10e-20 #- b*abs(nanoVel.z) #- 1*10e-25
-    dampingForceMagZ = (9*10e-15) * abs(nanoVel.z)
+    restForceMagZ = (8.88e-7)*abs(nanoVector.z)
+    dampingForceMagZ = b * abs(nanoVel.z)
 
     distanceToPlate = 100 + nanoVector.z  ## calculates the distance to the plate
 
-    '''
+
     ## checks the position of the particle to decide in what direction the restoring force/ thermal energy input should act (WITH CASIMIR)
+
     if nanoVector.x > 0:
         nanoVel.x = nanoVel.x - dt * restForceMagX / nanoM
     else:
@@ -131,111 +147,61 @@ while True:
         nanoVel.z = nanoVel.z - dt * (restForceMagZ - casimirForce(distanceToPlate/10e6))/ nanoM
     else:
         nanoVel.z = nanoVel.z + dt * (restForceMagZ + casimirForce(distanceToPlate/10e6))/ nanoM
-    
-    '''
-
-    # '''
-    ## checks the position of the particle to decide in what direction the restoring force/ thermal energy input should act (WITHOUT CASIMIR)
-    if nanoVector.x > 0:
-        nanoVel.x = nanoVel.x - dt * restForceMagX / nanoM
-    else:
-        nanoVel.x = nanoVel.x + dt * restForceMagX / nanoM
-
-    if nanoVector.y > 0:
-        nanoVel.y = nanoVel.y - dt * restForceMagY / nanoM
-    else:
-        nanoVel.y = nanoVel.y + dt * restForceMagY / nanoM
-
-    if nanoVector.z > 0:
-        nanoVel.z = nanoVel.z - dt * restForceMagZ / nanoM
-    else:
-        nanoVel.z = nanoVel.z + dt * restForceMagZ / nanoM
-    # '''
-
 
     ## checks the velocity of the particle to decide in what direction the damping force should act
     if nanoVel.x > 0:
-        nanoVel.x = nanoVel.x - dt * dampingForceMagX / nanoM + dt*thermalX
+        nanoVel.x = nanoVel.x - dt * dampingForceMagX + dt*thermalX
     else:
-        nanoVel.x = nanoVel.x + dt * dampingForceMagX / nanoM - dt*thermalX
+        nanoVel.x = nanoVel.x + dt * dampingForceMagX - dt*thermalX
 
     if nanoVel.y > 0:
-        nanoVel.y = nanoVel.y - dt * dampingForceMagY / nanoM + dt*thermalY
+        nanoVel.y = nanoVel.y - dt * dampingForceMagY + dt*thermalY
     else:
-        nanoVel.y = nanoVel.y + dt * dampingForceMagY / nanoM - dt*thermalY
+        nanoVel.y = nanoVel.y + dt * dampingForceMagY - dt*thermalX
 
     if nanoVel.z > 0:
-        nanoVel.z = nanoVel.z - dt * dampingForceMagZ / nanoM + dt*thermalZ
+        nanoVel.z = nanoVel.z - dt * dampingForceMagZ + dt*thermalY
     else:
-        nanoVel.z = nanoVel.z + dt * dampingForceMagZ / nanoM - dt*thermalZ
+        nanoVel.z = nanoVel.z + dt * dampingForceMagZ - dt*thermalX
 
 
-        ## simulates gas particle collisions, place holder
-        if np.random.randint(0,1001)>990: ## rolls a random number to decide if collision has occurred
-            i = 0
-            while i < 3:
-                velocityComponents[i] = np.sqrt(kB*T/gasM)*np.random.normal(0,1)
-                i = i + 1
+    ## simulates gas particle collisionsr
+    if np.random.randint(0,1001)>999: ## rolls a random number to decide if collision has occurred
+        i = 0
+        while i < 3:
+            velocityComponents[i] = np.sqrt(kB*T/gasM)*np.random.normal(0,1)
+            i = i + 1
 
-        xPortion = velocityComponents[0]*gasM
-        yPortion = velocityComponents[1]*gasM
-        zPortion = velocityComponents[2]*gasM
+    xPortion = velocityComponents[0]*gasM
+    yPortion = velocityComponents[1]*gasM
+    zPortion = velocityComponents[2]*gasM
 
-        nanoXMomentum = nanoVel.x * nanoM + xPortion
-        nanoYMomentum = nanoVel.y * nanoM + yPortion
-        nanoZMomentum = nanoVel.z * nanoM + zPortion
+    nanoXMomentum = nanoVel.x * nanoM + xPortion*np.random.randint(0,101)/100
+    nanoYMomentum = nanoVel.y * nanoM + yPortion*np.random.randint(0,101)/100
+    nanoZMomentum = nanoVel.z * nanoM + zPortion*np.random.randint(0,101)/100
 
-        nanoVel.x = + nanoXMomentum / nanoM  ## adds an impulse to the velocity on each axis
-        nanoVel.y = + nanoYMomentum / nanoM
-        nanoVel.z = + nanoZMomentum / nanoM
-
-
-
+    nanoVel.x = + nanoXMomentum / nanoM  ## adds an impulse to the velocity on each axis
+    nanoVel.y = + nanoYMomentum / nanoM
+    nanoVel.z = + nanoZMomentum / nanoM
 
     '''
-    ## simulates gas particle collisions, place holder
-    if np.random.randint(0,1001)>990: ## rolls a random number to decide if collision has occured
-
-         sign1 = (-1) ** np.random.randint(1, 3)  ## decides the sign of the momentum contribution on each axis
-         sign2 = (-1) ** np.random.randint(1, 3)  ## decides the sign of the momentum contribution on each axis
-         sign3 = (-1) ** np.random.randint(1, 3)  ## decides the sign of the momentum contribution on each axis
-
-         rand1 = np.random.randint(0,100)
-         rand2 = np.random.randint(0,100)
-         rand3 = np.random.randint(0,100)
-
-         xPortion = sign1 * gasMomentum * rand1/(rand1+rand2+rand3)
-         yPortion = sign2 * gasMomentum * rand2/(rand1+rand2+rand3)
-         zPortion = sign3 * gasMomentum * rand3/(rand1+rand2+rand3)
-
-         nanoXMomentum = nanoVel.x * nanoM + xPortion
-         nanoYMomentum = nanoVel.y * nanoM + yPortion
-         nanoZMomentum = nanoVel.z * nanoM + zPortion
-
-         nanoVel.x =+ nanoXMomentum/nanoM ## adds an impulse to the velocity on each axis
-         nanoVel.y =+ nanoYMomentum/nanoM
-         nanoVel.z =+ nanoZMomentum/nanoM
-    '''
-
     ## simulates SF6/C60/alpha collisions. Delete as appropriate, needs refining
-    if np.random.randint(0,1001)>998: ## rolls a random number to decide if collision has occured
-        #Impulse = 0.1*(3e8)*alphaM      ## Alpha particle
-        Impulse = 0.01 * (3e8) * c60M  ## C60 particle
+    if np.random.randint(0,25001)>24999: ## rolls a random number to decide if collision has occured
+        Impulse = 0.01*(3e8)*alphaM      ## Alpha particle
         #Impulse = 0.0001 * (3e8) * sf6M  ## SF6 particle
 
-        nanoMomentum = nanoVel.x * nanoM + Impulse
+        nanoMomentum = nanoVel.x * nanoM + Impulse*np.random.randint(0,101)/100
         nanoVel.x += nanoMomentum/nanoM
-    #'''
+    '''
 
     nanoVector.x = nanoVector.x + nanoVel.x * dt + dt * dt * restForceMagX/(2*nanoM)
     nanoVector.y = nanoVector.y + nanoVel.y * dt + dt * dt * restForceMagY/(2*nanoM)
     nanoVector.z = nanoVector.z + nanoVel.z * dt + dt * dt * restForceMagZ/(2*nanoM)
     
-    nanoParticle.pos = nanoVector  # sets the new nanoParticle position to the updated postion vecotr
+    nanoParticle.pos = nanoVector  # sets the new nanoParticle position to the updated postion vector
     nanoVectorMag = mag(nanoVector)
 
     count = count + dt
-    timeData.append(count)
 
     x_pos.plot(pos=(count, nanoVector.x))
     y_pos.plot(pos=(count, nanoVector.y))
@@ -245,64 +211,25 @@ while True:
     y_vel.plot(pos=(count, nanoVel.y))
     z_vel.plot(pos=(count, nanoVel.z))
 
-    '''
-    if -700 > nanoVector.x > -600:
-        rangeM700toM600=+ 1
-    if -600 > nanoVector.x > -500:
-        rangeM600toM500=+ 1
-    if -500 > nanoVector.x > -400:
-        rangeM500toM400 = + 1
-    if -400 > nanoVector.x > -300:
-        rangeM400toM300 = + 1
-    if -300 > nanoVector.x > -200:
-        rangeM300toM200 = + 1
-    if -200 > nanoVector.x > -100:
-        rangeM200toM100 = + 1
-    if -100 > nanoVector.x > 0:
-        rangeM100toZero = + 1
+    timeData = np.append(timeData, count)
+    xPosData = np.append(xPosData, nanoVector.x)
+    yPosData = np.append(yPosData, nanoVector.y)
+    zPosData = np.append(zPosData, nanoVector.z)
 
-    if 0 < nanoVector.x < 100:
-        rangeZeroTo100 = + 1
-    if 100 < nanoVector.x < 200:
-        range100to200 = + 1
-    if 200 < nanoVector.x < 300:
-        range200to300 = + 1
-    if 300 < nanoVector.x < 400:
-        range300to400 = + 1
-    if 400 < nanoVector.x < 500:
-        range400to500 = + 1
-    if 500 < nanoVector.x < 600:
-        range500to600 = + 1
-    if 600 < nanoVector.x < 700:
-        range600toM700 = + 1
-    
-    x_Hist.plot(pos=(count, rangeM400toM300))
+    if i < 100:
+        i = i + 1
 
-    '''
-    #xPosData.append(nanoVector.x)
-    #yPosData.append(nanoVector.y)
-    #zPosData.append(nanoVector.z)
+    if i >= 100:
+        print("The number of xPosData points is: ", xPosData.size)
+        i=0
 
-    #print(c)
-    #combinedPosData = np.append(combinedPosData, xPosData, axis=0)
-    #combinedPosData = np.append(combinedPosData, yPosData, axis=1)
-    #combinedPosData = np.append(combinedPosData, zPosData, axis=2)
+    #p.dump(combinedData, open("combinedData.pkl", "wb"))
 
-    #zPosData = np.append(zPosData, nanoVector.z)
+    np.savetxt('timeData.csv', timeData)
+    np.savetxt('xData.csv', xPosData)
+    np.savetxt('yData.csv', yPosData)
+    np.savetxt('zData.csv', zPosData)
 
-    #combinedPosData = np.append(combinedPosData, xPosData, axis=0)
-    #combinedPosData = np.append(combinedPosData, yPosData, axis=1)
-    #combinedPosData = np.append(combinedPosData, zPosData, axis=2)
-
-    #np.savetxt('zData.csv', zPosData)
-    #np.savetxt('yData.csv', yPosData)
-
-    #np.savetxt('combinedPosData.csv', combinedPosData)
-
-    #np.savetxt('combinedPosData.csv', xPosData)
-
-    #print(xPosData.size)
-
-    rate(100) ## sets the animation rate
+    rate(400) ## sets the animation rate
 
 
